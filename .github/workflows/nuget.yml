@@ -1,0 +1,116 @@
+name: "Deploy to GitHub NuGet Repository"
+
+on:
+  push:
+    branches: 
+      - main
+    tags:
+      - 'v*'
+
+env:
+  SOLUTION_PATH: 'src/Umbraco.Migration.sln'
+  CONTRACT_PROJECT_PATH: 'src/Umbraco.Migration.Contract/Umbraco.Migration.Contract.csproj'
+  UMBRACO_8_PROJECT_PATH: 'src/Umbraco8.Migration/Umbraco8.Migration.csproj'
+  UMBRACO_7_PROJECT_PATH: 'src/Umbraco7.Migration/Umbraco7.Migration.csproj'
+  PACKAGE_OUTPUT_DIRECTORY: ${{ github.workspace }}\output
+  NUGET_SOURCE_URL: 'https://nuget.pkg.github.com/Org-vbiriukov/index.json'
+  NUGET_AUTH_TOKEN: ${{ secrets.NUGET_AUTH_TOKEN }}
+
+jobs:
+  deployContract: 
+    name: 'Deploy Contract'
+    runs-on: 'windows-latest'
+    steps:
+    - name: 'Checkout'
+      uses: actions/checkout@v2
+
+    - name: 'Contract.Restore packages'
+      run: dotnet restore ${{ env.CONTRACT_PROJECT_PATH }}
+
+    - name: 'Contract.Build project'
+      run: dotnet build ${{ env.CONTRACT_PROJECT_PATH }} --no-restore --configuration Release
+
+    - name: 'Contract.Pack project'
+      run: dotnet pack ${{ env.CONTRACT_PROJECT_PATH }} --no-restore --no-build --configuration Release --include-symbols --output ${{ env.PACKAGE_OUTPUT_DIRECTORY }}
+
+    - name: 'Push packages'
+      run: dotnet nuget push ${{ env.PACKAGE_OUTPUT_DIRECTORY }}\*.nupkg --skip-duplicate -k ${{ env.NUGET_AUTH_TOKEN }} -s ${{ env.NUGET_SOURCE_URL }}
+
+  deployUmbracoMigration7:
+    name: 'Deploy Umbraco 7 Migration'
+    needs: 'deployContract'
+    runs-on: 'windows-latest'
+    steps:
+
+    - name: 'Checkout'
+      uses: actions/checkout@v2
+        
+    - name: 'Install dotnet'
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '3.1.x'
+        
+    - name: 'Install dotnet 5.0'
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '5.0.x'
+
+    - name: 'Get Version'
+      id: version
+      uses: battila7/get-version-action@v2
+        
+    - name: Add msbuild to PATH
+      uses: microsoft/setup-msbuild@v1.0.2
+      
+    - uses: nuget/setup-nuget@v1
+      with:
+        nuget-version: '5.x'
+        
+    - name: 'Restore packages'
+      run: nuget restore ${{ env.SOLUTION_PATH }}
+
+    - name: 'Umbraco7.Build project'
+      run: nuget pack -Build ${{ env.UMBRACO_7_PROJECT_PATH }} -Properties Configuration=Release -Version ${{ steps.version.outputs.version-without-v }} -OutputDirectory ${{ env.PACKAGE_OUTPUT_DIRECTORY }}
+    
+    - name: 'Push packages'
+      run: dotnet nuget push ${{ env.PACKAGE_OUTPUT_DIRECTORY }}\*.nupkg --skip-duplicate -k ${{ env.NUGET_AUTH_TOKEN }} -s ${{ env.NUGET_SOURCE_URL }}
+
+  deployUmbracoMigration8:
+    name: 'Deploy Umbraco 8 Migration'
+    needs: 'deployContract'
+    runs-on: 'windows-latest'
+    steps:
+    - name: 'Checkout'
+      uses: actions/checkout@v2
+        
+    - name: 'Install dotnet'
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '3.1.x'
+        
+    - name: 'Install dotnet 5.0'
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '5.0.x'
+
+    - name: 'Get Version'
+      id: version
+      uses: battila7/get-version-action@v2
+        
+    - name: Add msbuild to PATH
+      uses: microsoft/setup-msbuild@v1.0.2
+      
+    - uses: nuget/setup-nuget@v1
+      with:
+        nuget-version: '5.x'
+        
+    - name: 'Restore packages'
+      run: nuget restore ${{ env.SOLUTION_PATH }}
+
+    - name: 'Umbraco8.Build project'
+      run: nuget pack -Build ${{ env.UMBRACO_8_PROJECT_PATH }} -Properties Configuration=Release -Version ${{ steps.version.outputs.version-without-v }} -OutputDirectory ${{ env.PACKAGE_OUTPUT_DIRECTORY }}
+
+    - name: 'Push packages'
+      run: dotnet nuget push ${{ env.PACKAGE_OUTPUT_DIRECTORY }}\*.nupkg --skip-duplicate -k ${{ env.NUGET_AUTH_TOKEN }} -s ${{ env.NUGET_SOURCE_URL }}
+
+    

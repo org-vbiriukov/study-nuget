@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+	<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+	<PackageId>Compent.Umbraco.Migration.Contract</PackageId>
+	<PackageVersion>1.0.0</PackageVersion>
+	<Authors>Compent</Authors>
+	<Description>Compent Umbraco Migration Contract</Description>
+	<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+	<Copyright>Compent 2022 (c). All rights reserved.</Copyright>
+	<PackageTags>Shared libraries</PackageTags>
+	<Deterministic>False</Deterministic>
+	<AssemblyName>Umbraco.Migration.Contract</AssemblyName>
+	<RootNamespace>Umbraco.Migration.Contract</RootNamespace>
+	<RepositoryType>git</RepositoryType>
+	<RepositoryUrl>https://github.com/org-vbiriukov/study-nuget</RepositoryUrl>
+  </PropertyGroup>
+</Project>
